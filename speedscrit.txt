@@ -1,0 +1,16 @@
+-- WalkSpeed Loop Script
+-- Continuously sets the player's WalkSpeed
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+local WALK_SPEED = 75  -- Change this value to your desired speed
+
+while true do
+    if humanoid then
+        humanoid.WalkSpeed = WALK_SPEED
+    end
+    task.wait(0.1)  -- Loop every 0.1 seconds
+end
