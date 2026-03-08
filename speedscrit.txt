@@ -2,44 +2,54 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
-local WALK_SPEED = 120 -- Change this to your desired speed
+local WALK_SPEED = 120
 
 local function applySpeed(character)
     local humanoid = character:WaitForChild("Humanoid")
     local rootPart = character:WaitForChild("HumanoidRootPart")
 
-    -- Prevents sliding by keeping friction high
     for _, part in pairs(character:GetChildren()) do
         if part:IsA("BasePart") then
             part.CustomPhysicalProperties = PhysicalProperties.new(
-                0.7,  -- Density
-                0.3,  -- Friction
-                0,    -- Elasticity
-                0.1,  -- FrictionWeight
-                0     -- ElasticityWeight
+                0.7, 0.3, 0, 0.1, 0
             )
         end
     end
 
-    -- Loop to keep speed applied
-    RunService.Heartbeat:Connect(function()
-        if humanoid and humanoid.Parent then
-            humanoid.WalkSpeed = WALK_SPEED
-            -- Stops sliding when not moving
-            if humanoid.MoveDirection.Magnitude == 0 then
-                rootPart.AssemblyLinearVelocity = Vector3.new(
-                    0,
-                    rootPart.AssemblyLinearVelocity.Y,
-                    0
-                )
-            end
+    local connection
+    connection = RunService.Heartbeat:Connect(function()
+        -- Stop loop if character is gone (died)
+        if not humanoid or not humanoid.Parent then
+            connection:Disconnect()
+            return
         end
+
+        humanoid.WalkSpeed = WALK_SPEED
+
+        if humanoid.MoveDirection.Magnitude == 0 then
+            rootPart.AssemblyLinearVelocity = Vector3.new(
+                0,
+                rootPart.AssemblyLinearVelocity.Y,
+                0
+            )
+        end
+    end)
+
+    -- Fires when character dies, waits for respawn
+    humanoid.Died:Connect(function()
+        connection:Disconnect()
+        print("Character died - waiting for respawn...")
     end)
 end
 
--- Apply on spawn and respawn
+-- Initial load
 if player.Character then
     applySpeed(player.Character)
 end
 
-player.CharacterAdded:Connect(applySpeed)
+-- Fires every respawn
+player.CharacterAdded:Connect(function(character)
+    task.wait(0.5) -- Small delay to let character fully load
+    applySpeed(character)
+    print("Speed reapplied after respawn!")
+end)
