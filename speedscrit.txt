@@ -1,16 +1,45 @@
--- WalkSpeed Loop Script
--- Continuously sets the player's WalkSpeed
-
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
 local player = Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
+local WALK_SPEED = 120 -- Change this to your desired speed
 
-local WALK_SPEED = 75  -- Change this value to your desired speed
+local function applySpeed(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    local rootPart = character:WaitForChild("HumanoidRootPart")
 
-while true do
-    if humanoid then
-        humanoid.WalkSpeed = WALK_SPEED
+    -- Prevents sliding by keeping friction high
+    for _, part in pairs(character:GetChildren()) do
+        if part:IsA("BasePart") then
+            part.CustomPhysicalProperties = PhysicalProperties.new(
+                0.7,  -- Density
+                0.3,  -- Friction
+                0,    -- Elasticity
+                0.1,  -- FrictionWeight
+                0     -- ElasticityWeight
+            )
+        end
     end
-    task.wait(0.1)  -- Loop every 0.1 seconds
+
+    -- Loop to keep speed applied
+    RunService.Heartbeat:Connect(function()
+        if humanoid and humanoid.Parent then
+            humanoid.WalkSpeed = WALK_SPEED
+            -- Stops sliding when not moving
+            if humanoid.MoveDirection.Magnitude == 0 then
+                rootPart.AssemblyLinearVelocity = Vector3.new(
+                    0,
+                    rootPart.AssemblyLinearVelocity.Y,
+                    0
+                )
+            end
+        end
+    end)
 end
+
+-- Apply on spawn and respawn
+if player.Character then
+    applySpeed(player.Character)
+end
+
+player.CharacterAdded:Connect(applySpeed)
