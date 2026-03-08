@@ -5,7 +5,7 @@ local player = Players.LocalPlayer
 
 -- Set default speed if not already set
 if not getgenv().WalkSpeed then
-    getgenv().WalkSpeed = 60
+    getgenv().WalkSpeed = 120
 end
 
 local function applySpeed(character)
@@ -52,4 +52,5 @@ player.CharacterAdded:Connect(function(character)
     task.wait(0.5)
     applySpeed(character)
 end)
+
 
