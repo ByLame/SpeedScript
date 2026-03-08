@@ -2,7 +2,11 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
-local WALK_SPEED = 120
+
+-- Set default speed if not already set
+if not getgenv().WalkSpeed then
+    getgenv().WalkSpeed = 120
+end
 
 local function applySpeed(character)
     local humanoid = character:WaitForChild("Humanoid")
@@ -18,13 +22,13 @@ local function applySpeed(character)
 
     local connection
     connection = RunService.Heartbeat:Connect(function()
-        -- Stop loop if character is gone (died)
         if not humanoid or not humanoid.Parent then
             connection:Disconnect()
             return
         end
 
-        humanoid.WalkSpeed = WALK_SPEED
+        -- Reads getgenv every frame so changes apply instantly
+        humanoid.WalkSpeed = getgenv().WalkSpeed or 120
 
         if humanoid.MoveDirection.Magnitude == 0 then
             rootPart.AssemblyLinearVelocity = Vector3.new(
@@ -35,21 +39,16 @@ local function applySpeed(character)
         end
     end)
 
-    -- Fires when character dies, waits for respawn
     humanoid.Died:Connect(function()
         connection:Disconnect()
-        print("Character died - waiting for respawn...")
     end)
 end
 
--- Initial load
 if player.Character then
     applySpeed(player.Character)
 end
 
--- Fires every respawn
 player.CharacterAdded:Connect(function(character)
-    task.wait(0.5) -- Small delay to let character fully load
+    task.wait(0.5)
     applySpeed(character)
-    print("Speed reapplied after respawn!")
 end)
