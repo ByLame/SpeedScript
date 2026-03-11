@@ -1,12 +1,172 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 
--- Set default speed if not already set
 if not getgenv().WalkSpeed then
     getgenv().WalkSpeed = 120
 end
+
+-- GUI Setup
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SpeedGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player.PlayerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 160)
+frame.Position = UDim2.new(0, 10, 0.5, 0)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
+
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0, 10)
+frameCorner.Parent = frame
+
+-- Credits label
+local credits = Instance.new("TextLabel")
+credits.Size = UDim2.new(1, 0, 0, 20)
+credits.Position = UDim2.new(0, 0, 0, 5)
+credits.BackgroundTransparency = 1
+credits.TextColor3 = Color3.fromRGB(180, 180, 180)
+credits.Text = "by ByLame"
+credits.Font = Enum.Font.GothamBold
+credits.TextSize = 12
+credits.Parent = frame
+
+-- Speed display label
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(1, 0, 0, 25)
+speedLabel.Position = UDim2.new(0, 0, 0, 28)
+speedLabel.BackgroundTransparency = 1
+speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedLabel.Text = "Speed: " .. getgenv().WalkSpeed
+speedLabel.Font = Enum.Font.GothamBold
+speedLabel.TextSize = 15
+speedLabel.Parent = frame
+
+-- Minus button
+local minusBtn = Instance.new("TextButton")
+minusBtn.Size = UDim2.new(0, 40, 0, 35)
+minusBtn.Position = UDim2.new(0, 10, 0, 60)
+minusBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+minusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+minusBtn.Text = "-"
+minusBtn.Font = Enum.Font.GothamBold
+minusBtn.TextSize = 20
+minusBtn.Parent = frame
+
+local minusCorner = Instance.new("UICorner")
+minusCorner.CornerRadius = UDim.new(0, 6)
+minusCorner.Parent = minusBtn
+
+-- Speed input box
+local speedInput = Instance.new("TextBox")
+speedInput.Size = UDim2.new(0, 80, 0, 35)
+speedInput.Position = UDim2.new(0, 60, 0, 60)
+speedInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+speedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedInput.Text = tostring(getgenv().WalkSpeed)
+speedInput.Font = Enum.Font.GothamBold
+speedInput.TextSize = 15
+speedInput.Parent = frame
+
+local inputCorner = Instance.new("UICorner")
+inputCorner.CornerRadius = UDim.new(0, 6)
+inputCorner.Parent = speedInput
+
+-- Plus button
+local plusBtn = Instance.new("TextButton")
+plusBtn.Size = UDim2.new(0, 40, 0, 35)
+plusBtn.Position = UDim2.new(0, 150, 0, 60)
+plusBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+plusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+plusBtn.Text = "+"
+plusBtn.Font = Enum.Font.GothamBold
+plusBtn.TextSize = 20
+plusBtn.Parent = frame
+
+local plusCorner = Instance.new("UICorner")
+plusCorner.CornerRadius = UDim.new(0, 6)
+plusCorner.Parent = plusBtn
+
+-- Toggle button
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(1, -20, 0, 35)
+toggleBtn.Position = UDim2.new(0, 10, 0, 110)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.Text = "Speed: ON"
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 16
+toggleBtn.Parent = frame
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 6)
+toggleCorner.Parent = toggleBtn
+
+-- Hint label
+local hint = Instance.new("TextLabel")
+hint.Size = UDim2.new(1, 0, 0, 15)
+hint.Position = UDim2.new(0, 0, 1, 5)
+hint.BackgroundTransparency = 1
+hint.TextColor3 = Color3.fromRGB(150, 150, 150)
+hint.Text = "→ hide  ← show"
+hint.Font = Enum.Font.Gotham
+hint.TextSize = 11
+hint.Parent = frame
+
+-- Speed Logic
+local enabled = true
+local STEP = 10 -- how much +/- changes speed
+
+local function updateSpeedLabel()
+    speedLabel.Text = "Speed: " .. getgenv().WalkSpeed
+    speedInput.Text = tostring(getgenv().WalkSpeed)
+end
+
+-- Plus / Minus buttons
+plusBtn.MouseButton1Click:Connect(function()
+    getgenv().WalkSpeed = (getgenv().WalkSpeed or 120) + STEP
+    updateSpeedLabel()
+end)
+
+minusBtn.MouseButton1Click:Connect(function()
+    getgenv().WalkSpeed = math.max(16, (getgenv().WalkSpeed or 120) - STEP)
+    updateSpeedLabel()
+end)
+
+-- Manual input box
+speedInput.FocusLost:Connect(function()
+    local val = tonumber(speedInput.Text)
+    if val then
+        getgenv().WalkSpeed = math.max(16, val)
+    end
+    updateSpeedLabel()
+end)
+
+-- Toggle button
+toggleBtn.MouseButton1Click:Connect(function()
+    enabled = not enabled
+    if enabled then
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+        toggleBtn.Text = "Speed: ON"
+    else
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        toggleBtn.Text = "Speed: OFF"
+    end
+end)
+
+-- Right/Left arrow to hide/show
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Right then
+        frame.Visible = false
+    elseif input.KeyCode == Enum.KeyCode.Left then
+        frame.Visible = true
+    end
+end)
 
 local function applySpeed(character)
     local humanoid = character:WaitForChild("Humanoid")
@@ -27,8 +187,11 @@ local function applySpeed(character)
             return
         end
 
-        -- Reads getgenv every frame so changes apply instantly
-        humanoid.WalkSpeed = getgenv().WalkSpeed or 120
+        if enabled then
+            humanoid.WalkSpeed = getgenv().WalkSpeed or 120
+        else
+            humanoid.WalkSpeed = 16
+        end
 
         if humanoid.MoveDirection.Magnitude == 0 then
             rootPart.AssemblyLinearVelocity = Vector3.new(
@@ -52,5 +215,3 @@ player.CharacterAdded:Connect(function(character)
     task.wait(0.5)
     applySpeed(character)
 end)
-
-
