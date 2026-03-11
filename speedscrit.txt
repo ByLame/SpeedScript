@@ -4,163 +4,193 @@ local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 
-if not getgenv().WalkSpeed then
-    getgenv().WalkSpeed = 120
-end
+getgenv().WalkSpeed = getgenv().WalkSpeed or 120
+getgenv().SpeedEnabled = true
 
--- GUI Setup
+-- GUI
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "SpeedGui"
+screenGui.Name = "LameSpeed"
 screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
 screenGui.Parent = player.PlayerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 200, 0, 160)
-frame.Position = UDim2.new(0, 10, 0.5, 0)
-frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.Size = UDim2.new(0, 210, 0, 175)
+frame.Position = UDim2.new(0, 15, 0, 15)
+frame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 frame.BorderSizePixel = 0
+frame.Active = true
 frame.Parent = screenGui
 
-local frameCorner = Instance.new("UICorner")
-frameCorner.CornerRadius = UDim.new(0, 10)
-frameCorner.Parent = frame
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
 
--- Credits label
-local credits = Instance.new("TextLabel")
-credits.Size = UDim2.new(1, 0, 0, 20)
-credits.Position = UDim2.new(0, 0, 0, 5)
-credits.BackgroundTransparency = 1
-credits.TextColor3 = Color3.fromRGB(180, 180, 180)
-credits.Text = "by ByLame"
-credits.Font = Enum.Font.GothamBold
-credits.TextSize = 12
-credits.Parent = frame
+-- Dragging
+local dragging, dragStart, startPos
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+    end
+end)
+frame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
 
--- Speed display label
+-- Title bar
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+titleBar.BorderSizePixel = 0
+titleBar.Parent = frame
+Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 10)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -50, 1, 0)
+title.Position = UDim2.new(0, 10, 0, 0)
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Text = "Lame"
+title.Font = Enum.Font.GothamBold
+title.TextSize = 15
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = titleBar
+
+local version = Instance.new("TextLabel")
+version.Size = UDim2.new(0, 45, 1, 0)
+version.Position = UDim2.new(1, -48, 0, 0)
+version.BackgroundTransparency = 1
+version.TextColor3 = Color3.fromRGB(120, 120, 120)
+version.Text = "v1.0.1"
+version.Font = Enum.Font.Gotham
+version.TextSize = 11
+version.Parent = titleBar
+
+-- Speed label
 local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(1, 0, 0, 25)
-speedLabel.Position = UDim2.new(0, 0, 0, 28)
+speedLabel.Size = UDim2.new(1, 0, 0, 20)
+speedLabel.Position = UDim2.new(0, 0, 0, 38)
 speedLabel.BackgroundTransparency = 1
-speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
 speedLabel.Text = "Speed: " .. getgenv().WalkSpeed
 speedLabel.Font = Enum.Font.GothamBold
-speedLabel.TextSize = 15
+speedLabel.TextSize = 13
 speedLabel.Parent = frame
 
 -- Minus button
 local minusBtn = Instance.new("TextButton")
-minusBtn.Size = UDim2.new(0, 40, 0, 35)
-minusBtn.Position = UDim2.new(0, 10, 0, 60)
-minusBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+minusBtn.Size = UDim2.new(0, 40, 0, 33)
+minusBtn.Position = UDim2.new(0, 12, 0, 65)
+minusBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
 minusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 minusBtn.Text = "-"
 minusBtn.Font = Enum.Font.GothamBold
-minusBtn.TextSize = 20
+minusBtn.TextSize = 22
 minusBtn.Parent = frame
+Instance.new("UICorner", minusBtn).CornerRadius = UDim.new(0, 6)
 
-local minusCorner = Instance.new("UICorner")
-minusCorner.CornerRadius = UDim.new(0, 6)
-minusCorner.Parent = minusBtn
-
--- Speed input box
+-- Input box
 local speedInput = Instance.new("TextBox")
-speedInput.Size = UDim2.new(0, 80, 0, 35)
-speedInput.Position = UDim2.new(0, 60, 0, 60)
-speedInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+speedInput.Size = UDim2.new(0, 90, 0, 33)
+speedInput.Position = UDim2.new(0, 60, 0, 65)
+speedInput.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 speedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
 speedInput.Text = tostring(getgenv().WalkSpeed)
 speedInput.Font = Enum.Font.GothamBold
 speedInput.TextSize = 15
+speedInput.ClearTextOnFocus = false
 speedInput.Parent = frame
-
-local inputCorner = Instance.new("UICorner")
-inputCorner.CornerRadius = UDim.new(0, 6)
-inputCorner.Parent = speedInput
+Instance.new("UICorner", speedInput).CornerRadius = UDim.new(0, 6)
 
 -- Plus button
 local plusBtn = Instance.new("TextButton")
-plusBtn.Size = UDim2.new(0, 40, 0, 35)
-plusBtn.Position = UDim2.new(0, 150, 0, 60)
-plusBtn.BackgroundColor3 = Color3.fromRGB(50, 180, 50)
+plusBtn.Size = UDim2.new(0, 40, 0, 33)
+plusBtn.Position = UDim2.new(0, 158, 0, 65)
+plusBtn.BackgroundColor3 = Color3.fromRGB(40, 160, 40)
 plusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 plusBtn.Text = "+"
 plusBtn.Font = Enum.Font.GothamBold
-plusBtn.TextSize = 20
+plusBtn.TextSize = 22
 plusBtn.Parent = frame
-
-local plusCorner = Instance.new("UICorner")
-plusCorner.CornerRadius = UDim.new(0, 6)
-plusCorner.Parent = plusBtn
+Instance.new("UICorner", plusBtn).CornerRadius = UDim.new(0, 6)
 
 -- Toggle button
 local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(1, -20, 0, 35)
-toggleBtn.Position = UDim2.new(0, 10, 0, 110)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+toggleBtn.Size = UDim2.new(1, -24, 0, 38)
+toggleBtn.Position = UDim2.new(0, 12, 0, 112)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
 toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 toggleBtn.Text = "Speed: ON"
 toggleBtn.Font = Enum.Font.GothamBold
 toggleBtn.TextSize = 16
 toggleBtn.Parent = frame
+Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 6)
 
-local toggleCorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 6)
-toggleCorner.Parent = toggleBtn
-
--- Hint label
+-- Hint
 local hint = Instance.new("TextLabel")
-hint.Size = UDim2.new(1, 0, 0, 15)
-hint.Position = UDim2.new(0, 0, 1, 5)
+hint.Size = UDim2.new(1, 0, 0, 14)
+hint.Position = UDim2.new(0, 0, 1, 4)
 hint.BackgroundTransparency = 1
-hint.TextColor3 = Color3.fromRGB(150, 150, 150)
-hint.Text = "→ hide  ← show"
+hint.TextColor3 = Color3.fromRGB(100, 100, 100)
+hint.Text = "→ hide   ← show"
 hint.Font = Enum.Font.Gotham
 hint.TextSize = 11
 hint.Parent = frame
 
--- Speed Logic
-local enabled = true
-local STEP = 10 -- how much +/- changes speed
-
-local function updateSpeedLabel()
+-- Update label helper
+local function updateLabel()
     speedLabel.Text = "Speed: " .. getgenv().WalkSpeed
     speedInput.Text = tostring(getgenv().WalkSpeed)
 end
 
--- Plus / Minus buttons
+-- Plus / Minus
 plusBtn.MouseButton1Click:Connect(function()
-    getgenv().WalkSpeed = (getgenv().WalkSpeed or 120) + STEP
-    updateSpeedLabel()
+    getgenv().WalkSpeed = getgenv().WalkSpeed + 10
+    updateLabel()
 end)
 
 minusBtn.MouseButton1Click:Connect(function()
-    getgenv().WalkSpeed = math.max(16, (getgenv().WalkSpeed or 120) - STEP)
-    updateSpeedLabel()
+    getgenv().WalkSpeed = math.max(16, getgenv().WalkSpeed - 10)
+    updateLabel()
 end)
 
--- Manual input box
-speedInput.FocusLost:Connect(function()
+-- Manual input
+speedInput.FocusLost:Connect(function(enterPressed)
     local val = tonumber(speedInput.Text)
-    if val then
-        getgenv().WalkSpeed = math.max(16, val)
+    if val and val >= 16 then
+        getgenv().WalkSpeed = val
     end
-    updateSpeedLabel()
+    updateLabel()
 end)
 
--- Toggle button
+-- Toggle
 toggleBtn.MouseButton1Click:Connect(function()
-    enabled = not enabled
-    if enabled then
-        toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+    getgenv().SpeedEnabled = not getgenv().SpeedEnabled
+    if getgenv().SpeedEnabled then
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
         toggleBtn.Text = "Speed: ON"
     else
-        toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        toggleBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
         toggleBtn.Text = "Speed: OFF"
     end
 end)
 
--- Right/Left arrow to hide/show
-UserInputService.InputBegan:Connect(function(input)
+-- Arrow keys hide/show
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
     if input.KeyCode == Enum.KeyCode.Right then
         frame.Visible = false
     elseif input.KeyCode == Enum.KeyCode.Left then
@@ -168,15 +198,14 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 
+-- Speed apply
 local function applySpeed(character)
     local humanoid = character:WaitForChild("Humanoid")
     local rootPart = character:WaitForChild("HumanoidRootPart")
 
     for _, part in pairs(character:GetChildren()) do
         if part:IsA("BasePart") then
-            part.CustomPhysicalProperties = PhysicalProperties.new(
-                0.7, 0.3, 0, 0.1, 0
-            )
+            part.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0, 0.1, 0)
         end
     end
 
@@ -186,19 +215,13 @@ local function applySpeed(character)
             connection:Disconnect()
             return
         end
-
-        if enabled then
-            humanoid.WalkSpeed = getgenv().WalkSpeed or 120
+        if getgenv().SpeedEnabled then
+            humanoid.WalkSpeed = getgenv().WalkSpeed
         else
             humanoid.WalkSpeed = 16
         end
-
         if humanoid.MoveDirection.Magnitude == 0 then
-            rootPart.AssemblyLinearVelocity = Vector3.new(
-                0,
-                rootPart.AssemblyLinearVelocity.Y,
-                0
-            )
+            rootPart.AssemblyLinearVelocity = Vector3.new(0, rootPart.AssemblyLinearVelocity.Y, 0)
         end
     end)
 
