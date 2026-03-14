@@ -1,204 +1,217 @@
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local remotes = ReplicatedStorage:WaitForChild("remoteEvents")
+local functions = ReplicatedStorage:WaitForChild("remoteFunctions")
 
-getgenv().WalkSpeed = getgenv().WalkSpeed or 120
-getgenv().SpeedEnabled = true
+-- Custom Theme
+WindUI:AddTheme({
+    Name="lame", 
+    Accent=Color3.fromHex("#18181b"), 
+    Background=Color3.fromHex("#231d3b"), 
+    Outline=Color3.fromHex("#FFF"), 
+    Text=Color3.fromHex("#FFF"), 
+    Placeholder=Color3.fromHex("#7a7a7a"), 
+    Button=Color3.fromHex("#52525b"), 
+    Icon=Color3.fromHex("#a1a1aa")
+})
 
--- GUI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "LameSpeed"
-screenGui.ResetOnSpawn = false
-screenGui.IgnoreGuiInset = true
-screenGui.Parent = player.PlayerGui
+local window = WindUI:CreateWindow({
+    Title="Lame Hub", 
+    Icon="rbxassetid://10734950309", 
+    Author="by Lame (@Jard_V2)", 
+    Size=UDim2.fromOffset(850,560), 
+    Transparent=true, 
+    Theme="lame"
+})
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 210, 0, 175)
-frame.Position = UDim2.new(0, 15, 0, 15)
-frame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-frame.BorderSizePixel = 0
-frame.Active = true
-frame.Parent = screenGui
+WindUI:SetTheme("lame")
+window:SetToggleKey(Enum.KeyCode.RightShift) -- Change this to your preferred key
+window:EditOpenButton({
+    Title="Lame Hub", 
+    Icon="rbxassetid://10734950309", 
+    CornerRadius=UDim.new(0.32,0), 
+    StrokeThickness=2, 
+    Color=ColorSequence.new(Color3.fromHex("#5942be"), Color3.fromHex("#a686fc")), 
+    OnlyMobile=false, 
+    Enabled=true, 
+    Draggable=true
+})
 
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 10)
+window:Tag({Title="v3.0", Icon="code-xml", Color=Color3.fromHex("#30ff6a"), Radius=13})
+window:Tag({Title="Ultimate Edition", Icon="scroll", Color=Color3.fromHex("#fffd7c"), Radius=13})
 
--- Dragging
-local dragging, dragStart, startPos
-frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = frame.Position
+print("Lame Hub loaded by @Jard_V2")
+
+-- ==================== CONFIGURATIONS ====================
+local config = { 
+    active = false, 
+    chaosMode = false,
+    rgbEnabled = false,
+    spinEnabled = false,
+    speedEnabled = true,
+    zoomEnabled = true,
+    walkSpeed = 120,
+    maxZoom = 500,
+    screenOverlayEnabled = false,
+    overlayColor = Color3.fromRGB(255, 255, 255),
+    overlayTransparency = 0.5
+}
+
+local driveTargets = {
+    ["Red Drive"] = "RedDrive",
+    ["White Drive"] = "WhiteDrive",
+    ["Blue Drive"] = "BlueDrive",
+    ["Glitched Drive"] = "GlitchedDrive"
+}
+
+-- ==================== SCREEN OVERLAY ====================
+local overlayGui = Instance.new("ScreenGui")
+overlayGui.Name = "LameOverlay"
+overlayGui.ResetOnSpawn = false
+overlayGui.IgnoreGuiInset = true
+overlayGui.DisplayOrder = -1 -- Behind game UI
+overlayGui.Parent = game:GetService("CoreGui")
+
+local overlayFrame = Instance.new("Frame")
+overlayFrame.Size = UDim2.new(1, 0, 1, 0)
+overlayFrame.Position = UDim2.new(0, 0, 0, 0)
+overlayFrame.BackgroundColor3 = config.overlayColor
+overlayFrame.BackgroundTransparency = 1 -- Start hidden
+overlayFrame.BorderSizePixel = 0
+overlayFrame.Parent = overlayGui
+
+local function updateOverlay()
+    if config.screenOverlayEnabled then
+        overlayFrame.BackgroundColor3 = config.overlayColor
+        overlayFrame.BackgroundTransparency = config.overlayTransparency
+    else
+        overlayFrame.BackgroundTransparency = 1
     end
-end)
-frame.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
--- Title bar
-local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 30)
-titleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-titleBar.BorderSizePixel = 0
-titleBar.Parent = frame
-Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 10)
-
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -50, 1, 0)
-title.Position = UDim2.new(0, 10, 0, 0)
-title.BackgroundTransparency = 1
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Text = "Lame"
-title.Font = Enum.Font.GothamBold
-title.TextSize = 15
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = titleBar
-
-local version = Instance.new("TextLabel")
-version.Size = UDim2.new(0, 45, 1, 0)
-version.Position = UDim2.new(1, -48, 0, 0)
-version.BackgroundTransparency = 1
-version.TextColor3 = Color3.fromRGB(120, 120, 120)
-version.Text = "v1.0.1"
-version.Font = Enum.Font.Gotham
-version.TextSize = 11
-version.Parent = titleBar
-
--- Speed label
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(1, 0, 0, 20)
-speedLabel.Position = UDim2.new(0, 0, 0, 38)
-speedLabel.BackgroundTransparency = 1
-speedLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-speedLabel.Text = "Speed: " .. getgenv().WalkSpeed
-speedLabel.Font = Enum.Font.GothamBold
-speedLabel.TextSize = 13
-speedLabel.Parent = frame
-
--- Minus button
-local minusBtn = Instance.new("TextButton")
-minusBtn.Size = UDim2.new(0, 40, 0, 33)
-minusBtn.Position = UDim2.new(0, 12, 0, 65)
-minusBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-minusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-minusBtn.Text = "-"
-minusBtn.Font = Enum.Font.GothamBold
-minusBtn.TextSize = 22
-minusBtn.Parent = frame
-Instance.new("UICorner", minusBtn).CornerRadius = UDim.new(0, 6)
-
--- Input box
-local speedInput = Instance.new("TextBox")
-speedInput.Size = UDim2.new(0, 90, 0, 33)
-speedInput.Position = UDim2.new(0, 60, 0, 65)
-speedInput.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-speedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-speedInput.Text = tostring(getgenv().WalkSpeed)
-speedInput.Font = Enum.Font.GothamBold
-speedInput.TextSize = 15
-speedInput.ClearTextOnFocus = false
-speedInput.Parent = frame
-Instance.new("UICorner", speedInput).CornerRadius = UDim.new(0, 6)
-
--- Plus button
-local plusBtn = Instance.new("TextButton")
-plusBtn.Size = UDim2.new(0, 40, 0, 33)
-plusBtn.Position = UDim2.new(0, 158, 0, 65)
-plusBtn.BackgroundColor3 = Color3.fromRGB(40, 160, 40)
-plusBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-plusBtn.Text = "+"
-plusBtn.Font = Enum.Font.GothamBold
-plusBtn.TextSize = 22
-plusBtn.Parent = frame
-Instance.new("UICorner", plusBtn).CornerRadius = UDim.new(0, 6)
-
--- Toggle button
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(1, -24, 0, 38)
-toggleBtn.Position = UDim2.new(0, 12, 0, 112)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleBtn.Text = "Speed: ON"
-toggleBtn.Font = Enum.Font.GothamBold
-toggleBtn.TextSize = 16
-toggleBtn.Parent = frame
-Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 6)
-
--- Hint
-local hint = Instance.new("TextLabel")
-hint.Size = UDim2.new(1, 0, 0, 14)
-hint.Position = UDim2.new(0, 0, 1, 4)
-hint.BackgroundTransparency = 1
-hint.TextColor3 = Color3.fromRGB(100, 100, 100)
-hint.Text = "→ hide   ← show"
-hint.Font = Enum.Font.Gotham
-hint.TextSize = 11
-hint.Parent = frame
-
--- Update label helper
-local function updateLabel()
-    speedLabel.Text = "Speed: " .. getgenv().WalkSpeed
-    speedInput.Text = tostring(getgenv().WalkSpeed)
 end
 
--- Plus / Minus
-plusBtn.MouseButton1Click:Connect(function()
-    getgenv().WalkSpeed = getgenv().WalkSpeed + 10
-    updateLabel()
-end)
-
-minusBtn.MouseButton1Click:Connect(function()
-    getgenv().WalkSpeed = math.max(16, getgenv().WalkSpeed - 10)
-    updateLabel()
-end)
-
--- Manual input
-speedInput.FocusLost:Connect(function(enterPressed)
-    local val = tonumber(speedInput.Text)
-    if val and val >= 16 then
-        getgenv().WalkSpeed = val
+-- ==================== DRIVE FARM FUNCTIONS ====================
+local function fastDriveSpam()
+    local driveNames = {"Red Drive", "White Drive", "Blue Drive", "Glitched Drive"}
+    for _ = 1, 5 do 
+        for _, name in ipairs(driveNames) do
+            task.spawn(function()
+                functions.PlayerActivesCommand:InvokeServer({ Name = name })
+            end)
+        end
+        task.wait() 
     end
-    updateLabel()
-end)
+end
 
--- Toggle
-toggleBtn.MouseButton1Click:Connect(function()
-    getgenv().SpeedEnabled = not getgenv().SpeedEnabled
-    if getgenv().SpeedEnabled then
-        toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
-        toggleBtn.Text = "Speed: ON"
-    else
-        toggleBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
-        toggleBtn.Text = "Speed: OFF"
+local function getInventoryCount(driveName)
+    local screenGui = player.PlayerGui:FindFirstChild("ScreenGui")
+    local eggRows = screenGui and screenGui:FindFirstChild("EggRows", true)
+    if not eggRows then return 0 end
+    
+    for _, row in ipairs(eggRows:GetChildren()) do
+        local typeLabel = row:FindFirstChild("TypeName")
+        if typeLabel and typeLabel.Text == driveName then
+            local countText = row:FindFirstChild("EggSlot") and row.EggSlot:FindFirstChild("Count") and row.EggSlot.Count.Text
+            return tonumber(countText:match("(%d+)/")) or 0
+        end
     end
-end)
+    return 0
+end
 
--- Arrow keys hide/show
-UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if input.KeyCode == Enum.KeyCode.Right then
-        frame.Visible = false
-    elseif input.KeyCode == Enum.KeyCode.Left then
-        frame.Visible = true
+local function checkDigitalBee()
+    local prompt = player.PlayerGui.ScreenGui:FindFirstChild("RoboBearPrompt")
+    if not (prompt and prompt.Visible) then return nil end
+    local btnFrame = prompt:FindFirstChild("ButtonFrame", true)
+    for i = 1, 3 do
+        local btn = btnFrame and btnFrame:FindFirstChild("Button" .. i)
+        if btn and btn:FindFirstChild("Text1") and string.find(btn.Text1.Text, "★ Digital Bee") then
+            return i
+        end
     end
-end)
+    return nil
+end
 
--- Speed apply
+local function startAutomation()
+    while config.active do
+        -- 1. HYPER RESTOCK
+        for displayName, technicalName in pairs(driveTargets) do
+            while getInventoryCount(displayName) < 5 and config.active do
+                remotes.SelectNPCOption:FireServer("StartRoboBearChallenge")
+                remotes.roboBearChallenge:FireServer("start")
+                remotes.roboBearChallenge:FireServer("quit")
+                
+                task.spawn(function()
+                    functions.ItemPackageEvent:InvokeServer("Purchase", {
+                        ["Type"] = technicalName,
+                        ["Category"] = "Eggs",
+                        ["Amount"] = 1
+                    })
+                end)
+                
+                task.wait(0.01)
+            end
+        end
+
+        -- 2. OPTIMIZED SNIPE
+        if config.active then
+            remotes.SelectNPCOption:FireServer("StartRoboBearChallenge")
+            task.wait()
+            remotes.roboBearChallenge:FireServer("selectQuest", 1)
+            task.wait()
+
+            local found = false
+            for i = 0, 6 do
+                local beeIndex = checkDigitalBee()
+                if beeIndex then
+                    remotes.roboBearChallenge:FireServer("selectBee", beeIndex)
+                    remotes.roboBearChallenge:FireServer("start")
+                    
+                    task.wait(0.01)
+                    fastDriveSpam() 
+                    
+                    task.wait(0.3)
+                    remotes.roboBearChallenge:FireServer("quit")
+                    found = true
+                    break
+                end
+                
+                if i < 6 then
+                    remotes.roboBearChallenge:FireServer("reroll")
+                    task.wait(0.1) 
+                end
+            end
+            if not found then remotes.roboBearChallenge:FireServer("quit") end
+        end
+        task.wait(0.01)
+    end
+end
+
+-- ==================== CHAOS FUNCTIONS ====================
+local function mobStacker()
+    while config.chaosMode do
+        remotes.SelectNPCOption:FireServer("StartRoboBearChallenge")
+        remotes.roboBearChallenge:FireServer("start")
+        task.wait(0.01)
+    end
+end
+
+local mobMultiplierActive = false
+local function mobMultiplier()
+    while mobMultiplierActive do
+        remotes.SelectNPCOption:FireServer("StartRoboBearChallenge")
+        remotes.roboBearChallenge:FireServer("start")
+        RunService.Heartbeat:Wait()
+        remotes.roboBearChallenge:FireServer("quit")
+        task.wait(0.05) 
+    end
+end
+
+-- ==================== SPEED SYSTEM ====================
 local function applySpeed(character)
     local humanoid = character:WaitForChild("Humanoid")
     local rootPart = character:WaitForChild("HumanoidRootPart")
@@ -215,8 +228,8 @@ local function applySpeed(character)
             connection:Disconnect()
             return
         end
-        if getgenv().SpeedEnabled then
-            humanoid.WalkSpeed = getgenv().WalkSpeed
+        if config.speedEnabled then
+            humanoid.WalkSpeed = config.walkSpeed
         else
             humanoid.WalkSpeed = 16
         end
@@ -238,3 +251,258 @@ player.CharacterAdded:Connect(function(character)
     task.wait(0.5)
     applySpeed(character)
 end)
+
+-- ==================== ZOOM SYSTEM ====================
+RunService.RenderStepped:Connect(function()
+    pcall(function()
+        if config.zoomEnabled then
+            player.CameraMaxZoomDistance = config.maxZoom
+            player.CameraMinZoomDistance = 0.5
+            player.CameraMode = Enum.CameraMode.Classic
+            
+            if camera.CameraType ~= Enum.CameraType.Custom then
+                camera.CameraType = Enum.CameraType.Custom
+            end
+        end
+    end)
+end)
+
+-- ==================== TABS ====================
+
+-- MAIN TAB
+local mainTab = window:Tab({ Title = "Auto Farm", Icon = "rbxassetid://10734950309" })
+
+mainTab:Section({ Title = "Digital Bee Farm" })
+
+mainTab:Toggle({
+    Title = "Auto Farm Drives",
+    Description = "Automatically farms digital bee drives",
+    Callback = function(state)
+        config.active = state
+        if state then 
+            task.spawn(startAutomation)
+            WindUI:Notify({Title = "Auto Farm", Content = "Digital bee farming started!", Type = "Success"})
+        else
+            WindUI:Notify({Title = "Auto Farm", Content = "Farming stopped", Type = "Info"})
+        end
+    end
+})
+
+local roboPrompt = player.PlayerGui.ScreenGui:FindFirstChild("RoboBearPrompt")
+local hideConnection
+mainTab:Toggle({
+    Title = "Hide Robo Prompt",
+    Description = "Hides the robo bear challenge UI",
+    Callback = function(state)
+        if state and roboPrompt then
+            roboPrompt.MainFrame.Visible = false
+            roboPrompt.BackgroundTransparency = 1
+            hideConnection = roboPrompt:GetPropertyChangedSignal("Visible"):Connect(function()
+                if roboPrompt.MainFrame.Visible then
+                    roboPrompt.MainFrame.Visible = false
+                    roboPrompt.BackgroundTransparency = 1
+                end
+            end)
+        elseif hideConnection then
+            hideConnection:Disconnect()
+            if roboPrompt then
+                roboPrompt.MainFrame.Visible = true
+                roboPrompt.BackgroundTransparency = 0.25
+            end
+        end
+    end
+})
+
+-- MOVEMENT TAB
+local movementTab = window:Tab({ Title = "Movement", Icon = "zap" })
+
+movementTab:Section({ Title = "Speed Control" })
+
+movementTab:Slider({
+    Title = "Walk Speed",
+    Description = "Adjust your walking speed",
+    Value = {
+        Min = 16,
+        Max = 200,
+        Default = 120
+    },
+    Callback = function(value)
+        config.walkSpeed = value
+    end
+})
+
+movementTab:Toggle({
+    Title = "Speed Enabled",
+    Description = "Enable/disable speed modifications",
+    Default = true,
+    Callback = function(state)
+        config.speedEnabled = state
+    end
+})
+
+movementTab:Section({ Title = "Camera Zoom" })
+
+movementTab:Slider({
+    Title = "Max Zoom Distance",
+    Description = "How far you can zoom out",
+    Value = {
+        Min = 128,
+        Max = 2000,
+        Default = 500
+    },
+    Callback = function(value)
+        config.maxZoom = value
+    end
+})
+
+movementTab:Toggle({
+    Title = "Zoom Enabled",
+    Description = "Enable/disable zoom modifications",
+    Default = true,
+    Callback = function(state)
+        config.zoomEnabled = state
+    end
+})
+
+-- VISUAL TAB
+local visualTab = window:Tab({ Title = "Visuals", Icon = "eye" })
+
+visualTab:Section({ Title = "Screen Overlay" })
+
+visualTab:Toggle({
+    Title = "Screen Overlay",
+    Description = "Adds a colored overlay to your screen",
+    Callback = function(state)
+        config.screenOverlayEnabled = state
+        updateOverlay()
+    end
+})
+
+visualTab:Colorpicker({
+    Title = "Overlay Color",
+    Description = "Choose the overlay color",
+    Default = Color3.fromRGB(255, 255, 255),
+    Callback = function(color)
+        config.overlayColor = color
+        updateOverlay()
+    end
+})
+
+visualTab:Slider({
+    Title = "Overlay Transparency",
+    Description = "Adjust overlay visibility",
+    Value = {
+        Min = 0,
+        Max = 0.95,
+        Default = 0.5,
+        Increment = 0.05
+    },
+    Callback = function(value)
+        config.overlayTransparency = value
+        updateOverlay()
+    end
+})
+
+visualTab:Section({ Title = "Character Effects" })
+
+visualTab:Toggle({
+    Title = "Character Spin",
+    Description = "Makes your character spin",
+    Callback = function(state)
+        config.spinEnabled = state
+        task.spawn(function()
+            while config.spinEnabled do
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    player.Character.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, math.rad(20), 0)
+                end
+                RunService.RenderStepped:Wait()
+            end
+        end)
+    end
+})
+
+visualTab:Button({
+    Title = "Toggle Invisible",
+    Description = "Make your character invisible (client-side)",
+    Callback = function()
+        if player.Character then
+            for _, part in ipairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") or part:IsA("Decal") then
+                    part.Transparency = part.Transparency == 1 and 0 or 1
+                end
+            end
+            WindUI:Notify({Title = "Invisibility", Content = "Toggled character visibility", Type = "Info"})
+        end
+    end
+})
+
+-- CHAOS TAB
+local chaosTab = window:Tab({ Title = "Chaos", Icon = "sparkles" })
+
+chaosTab:Section({ Title = "Experimental Features" })
+
+chaosTab:Toggle({
+    Title = "Mob Stacker (Chaos Mode)",
+    Description = "⚠️ May cause lag or crashes",
+    Callback = function(state)
+        config.chaosMode = state
+        if state then 
+            task.spawn(mobStacker)
+            WindUI:Notify({Title = "Chaos", Content = "Mob stacker activated!", Type = "Warning"})
+        end
+    end
+})
+
+chaosTab:Toggle({
+    Title = "Mob Multiplier (Ghost Loop)",
+    Description = "Creates persistent mobs",
+    Callback = function(state)
+        mobMultiplierActive = state
+        if state then
+            task.spawn(mobMultiplier)
+            WindUI:Notify({Title = "Ghost Loop", Content = "Mob multiplier active", Type = "Info"})
+        end
+    end
+})
+
+-- SETTINGS TAB
+local settingsTab = window:Tab({ Title = "Settings", Icon = "settings" })
+
+settingsTab:Section({ Title = "GUI Controls" })
+
+settingsTab:Keybind({
+    Title = "Toggle GUI",
+    Description = "Key to show/hide the GUI",
+    Default = Enum.KeyCode.RightShift,
+    Callback = function(key)
+        window:SetToggleKey(key)
+        WindUI:Notify({Title = "Keybind", Content = "GUI toggle key set to " .. key.Name, Type = "Success"})
+    end
+})
+
+settingsTab:Button({
+    Title = "Destroy GUI",
+    Description = "Completely removes the GUI",
+    Callback = function()
+        WindUI:Notify({Title = "Goodbye!", Content = "Destroying GUI in 2 seconds...", Type = "Warning"})
+        task.wait(2)
+        window:Destroy()
+    end
+})
+
+settingsTab:Section({ Title = "Info" })
+
+settingsTab:Label({Title = "Made by Lame (@Jard_V2)"})
+settingsTab:Label({Title = "Version: 3.0 Ultimate"})
+settingsTab:Label({Title = "Features: Auto Farm, Speed, Zoom, Visuals, Chaos"})
+
+-- ==================== INITIAL NOTIFICATION ====================
+WindUI:Notify({
+    Title = "Lame Hub Loaded!", 
+    Content = "Press RightShift to toggle GUI", 
+    Type = "Success",
+    Duration = 5
+})
+
+print("[Lame Hub] Successfully loaded all features!")
+print("[Lame Hub] Created by @Jard_V2")
